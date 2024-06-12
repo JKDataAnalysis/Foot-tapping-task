@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CEDResources>
+	<DocTime>
+		<View>
+			<WPlace flags="2" showc="3" minx="-1" miny="-1" maxx="-8" maxy="-31" t="52" b="424" l="52" r="1176"/>
+			<Font hgt="-11" hthou="-115" wgt="400" paf="16" fnam="Times New Roman"/>
+			<Chan Chan="30" DMode="9" DTrig="-1" DBoth="1" DHLine="1" DSubMd="2" Vis="1" Ax="0" AxMin="0" AxMax="1" AdcAxMax="1" FreqAxMax="2" ChType="5"/>
+			<Chan Chan="7" DMode="11" DSubMd="2" Vis="1" Ax="1" AxMin="-5" AxMax="5" AdcAxMin="-5" AdcAxMax="5" FreqAxMax="5000" AxType="1" ChType="1"/>
+			<Chan Chan="5" DMode="11" DSubMd="2" Vis="1" Ax="1" AxMin="-5" AxMax="5" AdcAxMin="-5" AdcAxMax="5" FreqAxMax="5000" AxType="1" ChType="1"/>
+			<Chan Chan="3" DMode="10" DTrig="-1" DBoth="1" DHLine="1" DSubMd="2" Vis="1" Ax="0" AxMin="0" AxMax="1" AdcAxMax="1" FreqAxMax="6" ChType="2"/>
+			<Chan Chan="1" DMode="10" DTrig="-1" DBoth="1" DHLine="1" DSubMd="2" Vis="1" Ax="0" AxMin="0" AxMax="1" AdcAxMax="1" FreqAxMax="6" ChType="2"/>
+			<XInfo Left="5.0780829095033315" Right="13.078078604236755" XAxSmall="5" VCLabMode="2" HCLabMode="1" VCCount="1">
+				<VCur id="0" Pos="0" LabMode="2" LabPos="0.20000000000000001" Num="0" Chan="0" LabStr="" AMode="0"/>
+			</XInfo>
+			<ChOrder Chans="5">
+				<c id="0" Chan="30"/>
+				<c id="1" Chan="7"/>
+				<c id="2" Chan="5"/>
+				<c id="3" Chan="3"/>
+				<c id="4" Chan="1"/>
+			</ChOrder>
+			<CursVals XZero="0" YZero="0" Mode="0"/>
+			<CursRegs XZero="0" YZero="0" Mode="0"/>
+			<OvDraw3d YProp="0.5" XScale="0.5" YScale="0.5"/>
+		</View>
+	</DocTime>
+	<App>
+		<WPlace flags="2" showc="3" minx="-1" miny="-1" maxx="-1" maxy="-1" t="26" b="551" l="26" r="1051"/>
+	</App>
+	<Sample S2Ver="720" ARange="5">
+		<!--Sampling configuration saved to M:\Research\Craig\DoubleGateConfig_D&A_2&4.s2cx on 24 June 2022 12:29:55-->
+		<Chans Chans="32" BigFile="0" IdealWMRate="20000" DigMode="0">
+			<Chan id="1" Type="2" Title="Gate2_D" Port="5" Traces="0" Rate="3" ActRate="100" Comment="No comment" Units=" Volt" Scale="1" Offs="0" Pts="32" PreTrig="10" DBounce="0" Divide="0" AType="0" SerTerm="" SerBaud="9600" SerBits="0" SerStop="0" SerHand="1" Source="0" InTalk="0" Talker="" TalkVer="0" TalkChID=""/>
+			<Chan id="3" Type="2" Title="Gate4_D" Port="4" Traces="0" Rate="3" ActRate="100" Comment="No comment" Units=" Volt" Scale="1" Offs="0" Pts="32" PreTrig="10" DBounce="0" Divide="0" AType="0" SerTerm="" SerBaud="9600" SerBits="0" SerStop="0" SerHand="1" Source="0" InTalk="0" Talker="" TalkVer="0" TalkChID=""/>
+			<Chan id="5" Type="1" Title="Gate2_A" Port="1" Traces="0" Rate="10000" ActRate="10000" Comment="No comment" Units=" Volt" Scale="1" Offs="0" Pts="32" PreTrig="10" DBounce="0" Divide="2" AType="0" SerTerm="" SerBaud="9600" SerBits="0" SerStop="0" SerHand="1" Source="0" InTalk="0" Talker="" TalkVer="0" TalkChID=""/>
+			<Chan id="7" Type="1" Title="Gate4_A" Port="3" Traces="0" Rate="10000" ActRate="10000" Comment="No comment" Units=" Volt" Scale="1" Offs="0" Pts="32" PreTrig="10" DBounce="0" Divide="2" AType="0" SerTerm="" SerBaud="9600" SerBits="0" SerStop="0" SerHand="1" Source="0" InTalk="0" Talker="" TalkVer="0" TalkChID=""/>
+			<Chan id="30" Type="5" Title="Keyboard" Port="0" Traces="0" Rate="1" ActRate="100" Comment="No comment" Units=" Volt" Scale="1" Offs="0" Pts="32" PreTrig="10" DBounce="0" Divide="0" AType="0" SerTerm="" SerBaud="9600" SerBits="0" SerStop="0" SerHand="1" Source="0" InTalk="0" Talker="" TalkVer="0" TalkChID=""/>
+		</Chans>
+		<Resol uspt="5" tpa="10" recalc="0" Assume1401="6" TenMHz="0" OptMeth="1" OptUSFrom="2" OptUSTo="50" GrpRates="1" QuickDum="0" CompFlgs="0" Burst="0"/>
+		<Mode Mode="0" For="60" ForUn="0" Every="10" EveryUn="1">
+			<Trigs id="0" Chan="-4" Code="-1" Pre="0" Post="1" Chans="-1" Mask="0" List=""/>
+			<Trigs id="1" Chan="-4" Code="-1" Pre="0" Post="1" Chans="-1" Mask="0" List=""/>
+			<Trigs id="2" Chan="-4" Code="-1" Pre="0" Post="1" Chans="-1" Mask="0" List=""/>
+			<Trigs id="3" Chan="-4" Code="-1" Pre="0" Post="1" Chans="-1" Mask="0" List=""/>
+		</Mode>
+		<Seq OutType="0" SeqFile="" SeqPer="1" SeqJump="0" DacFull="5" DacZero="0" SeqFlags="0" DacMask="3" DigMask="3" DacUnits="V" MinInst="0" MinTab="0">
+			<Pulses States="27"/>
+		</Seq>
+		<Waves/>
+		<Auto AutoName="" AutoPath="" Commit="300" AutoSave="0" AutoCom="0" RepCt="0" StTrig="0" MaxTime="10" UseMaxT="0" MaxSize="1024" UseMaxS="0" Label="" Comment=""/>
+		<CondPorts Count="0"/>
+		<ForceOP SetDAC0="0" DAC0="0" SetDAC1="0" DAC1="0" SetDAC2="0" DAC2="0" SetDAC3="0" DAC3="0" SetDAC4="0" DAC4="0" SetDAC5="0" DAC5="0" SetDAC6="0" DAC6="0" SetDAC7="0" DAC7="0" DigOut="0" DigLow="0" RampT="0" OnLoad="0" OnStart="0" OnFinish="0"/>
+		<Talkers/>
+		<SampCtl t="73" b="0" l="-1" r="2"/>
+		<SeqCtl t="44" b="0" l="-1" r="2"/>
+		<SampSta t="103" b="0" l="-1" r="2"/>
+	</Sample>
+</CEDResources>

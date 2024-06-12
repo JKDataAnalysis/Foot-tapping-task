@@ -1,0 +1,119 @@
+' ###############################################################################################################################
+' # This script was developed by Dr Jon Kelly. You are welcome to use and modify it provided the source is suitably ackowledged #
+' ###############################################################################################################################
+
+' Version info
+' v3.0.1    - Toolbar implemented
+
+'================== DEBUGGING AND DEVELOPMENT NEEDED ===========================================================
+' 
+
+'================== Global constant and variable declarations  =================================================
+Const author$ := "Jon Kelly: jon.kelly@ed.ac.uk";   ' Author contact details
+Var er%;                                            ' Error codes
+Var timevw%;                                        ' Handle of time view to analyse
+
+
+'================== Start of script initiation process ===========================================================
+PrintLog("\n\n===================================================================================================\n");
+PrintLog("Running: %s \t\tStarted at: %s\t%s\n",view(app(3)).WindowTitle$(),Time$(1,7,0,":"),Date$(2,3,3,2," "));
+PrintLog("Script written by: %s\n",author$);
+PrintLog("===================================================================================================\n");
+initialise();
+
+
+' ----------------------------------------------------------------------
+proc initialise();  ' Initial startup actions
+var er%;
+
+View(app(0)).Window(0,0,100,100,1);  ' Use the whole desktop
+View(app(3)).WindowVisible(0);   ' Hide script window
+repeat
+    er% := tbar%();  ' Call toolbar function
+    Message("Back to initialise");
+until er% = 1;	' Quit clicked
+end
+
+' ----------------------------------------------------------------------
+func tbar%()   ' Create toolbar
+var tbarrtn%;   ' return value of toolbar
+
+ToolbarClear();
+ToolbarSet(1, "&Quit|0x1b", leaveall%);
+ToolbarSet(2, "&Open file", opentmv%);
+ToolbarSet(3, "&Choose file", choosetmv%);
+ToolbarSet(4, "&Run analysis", runanal%);
+if ViewKind() = 0 then ' current view is time view
+    ToolbarEnable(4, 1);    ' Ok to Run analysis
+else 
+    ToolbarEnable(4, 0);    ' Disable option to run analysis
+endif
+tbarrtn% := Toolbar("File set for analysis: " + WindowTitle$(), 1023); 
+return tbarrtn%
+End;
+
+' ----------------------------------------------------------------------
+func runanal%() ' Run the analysis
+var er%;    ' Error code
+
+er% := choosetmv%();    ' Get a time view to work on
+if er%> 0 then
+    View(er%);
+    PrintLog("Analysing %s\n", Windowtitle$());
+endif
+
+end
+' ----------------------------------------------------------------------
+func choosetmv%()   ' Choose from time windows already open
+const maxtimeviews% := 200; 'maximum number of time views that can list (size is arbritrary)
+var i%;  ' Looping variable
+var tmvindex%; ' Index in chosen time view
+var openedview%;    ' Handle of time view chosen in dialogue
+var timehandles%[maxtimeviews%];    ' Array for titles of time view 
+var timetitle$[maxtimeviews%];    ' Array for titles of time view 
+var er%;    ' Error code
+
+Viewlist(timehandles%[],1);	' Get list of time views already open
+if timehandles%[0] = 0 then
+    return opentmv%(); ' No time views open, go and get one
+else
+    For i% := 1 to timehandles%[0] Do	' Fill an array with time view titles
+        timetitle$[i%-1]:= View(timehandles%[i%]).Windowtitle$();    ' (timelist%[0] = No of time views)
+        PrintLog("%d: %s\n", timehandles%[i%], timetitle$[i%-1]); ' >>>> TEMP
+    Next
+    DlgCreate("Select time view",0,0,0,0);
+    DlgList(1, "Choose file|Select the file to analyse", timetitle$[], timehandles%[0]);
+    DlgShow(tmvindex%);
+    If DlgButton() = 1 then ' OK pressed
+        view(timehandles%[tmvindex% + 1]);    ' Set active time view to the handle of the item selected
+    endif
+endif
+
+End;  
+
+' ----------------------------------------------------------------------
+func opentmv%() ' Open a time view
+var timevw%;    ' Handle of time view opened
+timevw% := FileOpen("", 0, 1, "Select the file to be analysed");
+If timevw% < 0 then ' Opening time view failed or cancel was pressed
+    Message("No file opened");
+    return -1
+else
+    
+    view(timevw%);
+    Message("%d: %s opened", timevw%, View(timevw%).Windowtitle$() );
+    return 1
+endif
+
+end
+
+
+' ----------------------------------------------------------------------
+func leaveall%()    'quits program 
+Var lvall%;			' Quit script?
+var sv%;            ' Whether to save settings
+var i%;             ' Looping variable
+
+lvall% := Query("Quit script?|Quit?", "&Yes", "&No");
+return lvall%
+End;

@@ -1,0 +1,233 @@
+' Scrip to identify the timings of switch opening in light gate data
+
+' ###############################################################################################################################
+' # This script was developed by Dr Jon Kelly. You are welcome to use and modify it provided the source is suitably ackowledged #
+' ###############################################################################################################################
+
+' Version info
+' v0.1  - First functioning version
+' v0.2  - Approximate and refinement moved into seperate funcitons
+'       - Approximate search function modified to apply a smoothing function to avoid noise spikes
+'       - Refinement routine searches from approximate threshold times (with smoothing removed)
+'       - Refinement of search parameters
+'       - Error flags moved to a separate array and changed to text
+
+'================== DEBUGGING AND DEVELOPMENT NEEDED ===========================================================
+
+
+'================== Global constant and variable declaratoins  =================================================
+Const developer$ := "Jon Kelly: jon.kelly@ed.ac.uk";   ' Developer contact details
+Var apptitle$ := view(app(3)).WindowTitle$();   ' Name of app.
+const maxthresh% := 10000;  ' Sixe of arrays for threshold crossing times and realted error codes (arbritrary)
+Var wavlist%[2];    ' Handles of waveform channels (Left/ right/ l Error/ R Error)
+var threshtimes[2][maxthresh%];  ' Array for threshold crossing times [left/right][times]
+var threshterror$[2][maxthresh%];  ' Array for threshold crossing error flags[left/right][times]
+Var workingdir$ :="N:\Research\Craig";    ' Set working directory
+
+'================== Main procedures ============================================================================
+
+' ----------------------------------------------------------------------
+Func getfile%()
+    Var er%; ' Error codes 
+
+	er% := FileOpen(workingdir$ + "\\" + "*",0,1);
+	If er% <= 0 Then
+        Message ("No file opened!");
+    else
+    FrontView(er%);
+    EndIf
+    main();
+End
+
+' -------------------------------------------------------------------------------------------------------------------------
+Func choosev%();	'Choose the time view to be used
+    Const maxtimes% := 40;           ' Maximum number of time views (arbritrary)
+    Var title$;						' Variable to return view titles to
+	Var timetitle$[maxtimes%];		' Array for time view titles
+    Var dummy%;						' Variable to return item selected in dialogue to
+    Var times%[maxtimes%];          ' Handles of time views
+    Var i%;                         ' Looping variable
+    Var er%;                        ' Error codes
+
+    ViewList(times%[], 1); ' Fill array with time view handles
+	For i% := 1 to times%[0] Do	' Fill an array with time view titles
+		View(times%[i%]);
+		title$ := windowtitle$();
+		timetitle$[i%-1]:= title$;		' (timelist%[0]=No of time views)
+	Next
+	DlgCreate("Time views already open!",0,0,0,0);
+	DlgList(1,"Select time view",timetitle$[],(times%[0]));
+	er% := DlgShow(dummy%);	
+	'If er% < 1 Then	' user cancelled
+	'	leaveall("Cancel clicked");
+	'EndIf
+	return(times%[dummy%+1]); 'returns selected view as active view (+1 since 0 is No of views)
+End
+
+
+' -------------------------------------------------------------------------------------------------------------------------
+Proc getch()		' Procedure to identify channels
+	Var waves%[64];	' Dummy array for waveform channels
+	Var numwavs%;	' Number of waverform channels returned
+    Var er%;        ' Error codes 
+    Var i%;         ' Looping variable
+
+    wavlist%[0] := 6; wavlist%[1] := 8; ' Set default channels
+	numwavs% := Chanlist(waves%[],8193);	
+	DlgCreate("Please identify channels",0,0);	' Display dailogue to allow user to alter if needed
+	DlgChan(1,"Left",8193);
+	DlgChan(2,"Right",8193);
+	er% := DlgShow(wavlist%[0],wavlist%[1]);
+End
+
+' -------------------------------------------------------------------------------------------------------------------------
+func getapproxthresht(lr%, swchan%); ' Function to fill array with times of threshold crossings (Whether left (0) or right (1), Channel to search)
+    const srchmode% := 8; ' Approx position(Falling threshold)
+    var endtime := maxtime(swchan%);    ' End time- max time in channel
+    var sttime := 0.0;    ' Start of search - set to zero
+    ' >>>>>>>>>> Channel process parameters
+    const chproc% := 1;    ' Smooth
+    const chproctc := 0.01; ' Time constant for smoothing (WAS 0.005)
+    var chproci%;  ' Index of applied channel process
+    ' >>>>>>>>>> Threshold search parameters
+    const minstep := 0.0; ' Minimum step time
+    const thresh := 2.5; ' Threshold crossing level Was 1.5
+    const hyst := 2; ' Hysteresis (Approx., refined)
+    const delay := 0.01; ' Hysteresis (Approx., refined)
+    ' >>>>>>>>>> End of threshold search parameters
+    var thresht := 0;    ' Time threshold crossings found at
+    var threshi% := 1;  ' Index of threshold found (uses 1 as 0 will be the number of crossings found
+    
+    ' Get approximate times (falling through low threshold)
+    CursorActive(0, srchmode%, swchan%, minstep, Str$(endtime), "", thresh, hyst, delay); ' Create cursor for threshold searches
+    Cursor(0, 0);   ' Set cursor 0 to the start of the file
+    chproci% := ChanProcessAdd(swchan%, chproc%);    ' Apply processing    
+    repeat
+        thresht := CursorSearch(0);    ' Search for next threshold crossing
+        If thresht >= 0 then  ' Threshold crossing time returned
+            threshtimes[lr%][threshi%] := thresht;
+            threshi% += 1;
+        endif
+    until thresht < 0; ' Failed to find any more threshold crossings
+    ChanProcessClear(swchan%, chproci%);   ' Remove the added processing
+    return(threshi%)
+end
+
+' -------------------------------------------------------------------------------------------------------------------------
+func refinethresht(lr%, swchan%); ' Function to refine threshold times based on searching backwards from approximate thresholds (left (0)/ right (1), channel to search)
+    const srchmode% := 7; ' Rising threshold
+    var endtime := maxtime(swchan%);    ' End time- max time in channel
+    var sttime := 0.0;    ' Start of search - set to zero
+    ' >>>>>>>>>> Threshold search parameters
+    const minstep := 0.0; ' Minimum step time
+    const thresh := 4.8; ' Threshold crossing level
+    const hyst := 0.1; ' Hysteresis
+    const delay := 0.001; ' Delay 
+    ' >>>>>>>>>> End of threshold search parameters
+    var thresht;    ' Time threshold crossings found at (approx, refined)
+    'var threshi% := 0;  ' Index of threshold found
+    var i%; ' Looping variable
+    var threshtlast := 0; ' Time of previous threshold crossing time
+    
+    for i% := 1 to threshtimes[lr%][0] do
+    Cursor(0, threshtimes[lr%][i%] + BinSize(swchan%)); ' Start with cursor at approximate threshold time + binsize or can miss threshold if no data points are between start and peak
+        CursorActive(0, srchmode%, swchan%, minstep, "", "", thresh, hyst,  delay); ' Configure cursor
+        thresht := CursorSearch(-1);    ' Search for next threshold crossing (Cursor 0 backwards)
+        If thresht >= 0 and thresht > threshtlast then' Threshold crossing time returned and hasn't just found the previous one again
+            threshtimes[lr%][i%] := thresht;
+            threshtlast:= thresht; 'Record last threshold crossing found
+            threshterror$[lr%][i%] := "R";     ' Flag as refiend found
+        else
+            threshterror$[lr%][i%] := "* A *";     ' Flag as refined not found- approx threshold left
+        endif
+    next
+end
+
+' -------------------------------------------------------------------------------------------------------------------------
+Proc writeresults();
+    Var i%;     ' Looping variable
+    Var txthandle%; ' Handle for text file view
+    Var timevw% := view();  ' Get handle of current time view
+    Var textvwtitle$, timevwtitle$ := WindowTitle$();  ' default title for text file, time view title    
+    Var er%;    ' Error codes
+    Var tdiffl, tdiffr; 'Time differences
+    Var numthresh%; 'Max number of threshold found in L or R
+
+    textvwtitle$ := Left$(timevwtitle$, len(timevwtitle$) - 4) + ".tsv"; ' Strip out ".smr" from time view title and add ".tsv"
+    txthandle% := FileNew(1);
+    If txthandle% < 0 then Message("Error!Failed to create text file");  endif
+
+    if threshtimes[0][0] > threshtimes[1][0] then ' There are more left than right
+        numthresh% := threshtimes[0][0]
+    else 
+        numthresh% := threshtimes[1][0] ' There are more right than left or they are equal
+    endif  
+    Print("Analysis run by: %s\n", apptitle$);
+    Print("Filename: %s\n", timevwtitle$);
+    Print("Left channel: %d: %s\nRight channel: %d: %s\n", wavlist%[0], View(timevw%).ChanTitle$(wavlist%[0]), wavlist%[1], View(timevw%).ChanTitle$(wavlist%[1]));
+    Print("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", "Index", "L Time", "R Time", "L Diff", "R Diff", "L Error", "R Error")
+    for i% := 1 to numthresh% - 1 do    ' Write thresholds
+        If i% > 1 then ' Not on first one- calculate time differences
+            tdiffl := threshtimes[0][i%] - threshtimes[0][i%-1];
+            tdiffr := threshtimes[1][i%] - threshtimes[1][i%-1];
+        endif
+    Print("%d\t%.4f\t%.4f\t%.4f\t%.4f\t%s\t%s\n", i%, threshtimes[0][i%], threshtimes[1][i%], tdiffl, tdiffr, threshterror$[0][i%], threshterror$[1][i%]);
+    next
+    er%:= View(txthandle%).FileSaveAs(workingdir$ + "\\" + textvwtitle$ +"",-1, 0, "Save timings to file");
+    if er% = 0 then ' Saved succesfully
+    FileClose(0);
+        Message("Success|Analysis complete");
+    else
+        Message("Failed to save text file\nError code %d\nFile will be left open", er%);
+    endif
+End
+
+' -------------------------------------------------------------------------------------------------------------------------
+Func leaveall%()        'quits program
+	Var lvall%;			' Quit script?
+
+    lvall% := Query("Quit script");
+	If lvall% Then
+		halt
+	Else
+		main();
+    EndIf
+End
+' -------------------------------------------------------------------------------------------------------------------------
+Func setwd%()
+    workingdir$ := Input$("Enter working directory", workingdir$);
+    main();
+End
+' -------------------------------------------------------------------------------------------------------------------------
+Func runanal%();
+    Var i%; ' Looping variable
+    Var maxthreshi% := 0;    ' Maximum number of thresholds found
+    Var threshi%;   ' Number of thresholds returned as found
+
+    view(choosev%());
+    getch();
+    for i% := 0 to 1 do ' Get approx thresholds
+        threshtimes[i%][0] := getapproxthresht(i%, wavlist%[i%]); ' set 0 index to number returned
+    next
+    for i% := 0 to 1 do ' Refine thresholds
+        refinethresht(i%, wavlist%[i%]);
+    next
+    writeresults();
+    main(); ' Go again
+End
+' -------------------------------------------------------------------------------------------------------------------------
+
+Proc main();
+    ToolbarSet(1, "Quit", leaveall%);
+    ToolbarSet(2, "Run analysis", runanal%);
+    ToolbarSet(3, "Set working directory", setwd%);
+    ToolbarSet(4, "Open file", getfile%);
+    Toolbar("Running script: " + apptitle$ + " Developed by: " + developer$, 8193); 'Can do everything
+End    
+
+' Starts here ==================================
+PrintLog("\n\n===================================================================================================\n");
+PrintLog("Running: %s \t\tStarted at: %s\t%s\n",apptitle$,Time$(1,7,0,":"),Date$(2,3,3,2," "));
+PrintLog("Script written by: %s\n", developer$);
+PrintLog("===================================================================================================\n");
+main();
